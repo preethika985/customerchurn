@@ -1,0 +1,291 @@
+# ================= IMPORT LIBRARIES =================
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.linear_model import LogisticRegression
+
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+
+import seaborn as sns
+
+
+
+
+from sklearn.tree import DecisionTreeClassifier
+
+
+
+
+
+
+# ================= LOAD DATA =================
+
+print("\n===================== LOAD DATA =====================\n")
+
+
+df = pd.read_csv(
+    r"C:\Users\user\Downloads\archive (4)\Data Test.csv"
+)
+
+
+print(df.head())
+
+
+
+# ================= UNDERSTAND DATA =================
+
+print("\n===================== DATA INFORMATION =====================\n")
+
+
+print("Shape:")
+print(df.shape)
+
+
+print("\nColumns:")
+print(df.columns)
+
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+
+
+# ================= FIND TARGET COLUMN =================
+
+print("\n===================== TARGET COLUMN =====================\n")
+
+
+target_column = None
+
+
+for col in df.columns:
+
+    if df[col].nunique() == 2:
+
+        target_column = col
+
+        break
+
+
+
+if target_column is None:
+
+    raise Exception("Target column not found")
+
+
+print("Target Column:")
+print(target_column)
+
+
+print(df[target_column].value_counts())
+
+
+
+
+# ================= DATA CLEANING =================
+
+print("\n===================== DATA CLEANING =====================\n")
+
+
+
+# Remove ID columns
+
+remove_columns = []
+
+
+for col in df.columns:
+
+    if "id" in col.lower():
+
+        remove_columns.append(col)
+
+
+
+for col in remove_columns:
+
+    if col != target_column:
+
+        df.drop(
+            col,
+            axis=1,
+            inplace=True
+        )
+
+
+
+# Fill missing values
+
+for col in df.columns:
+
+    if df[col].dtype == "object":
+
+        df[col].fillna(
+            df[col].mode()[0],
+            inplace=True
+        )
+
+    else:
+
+        df[col].fillna(
+            df[col].median(),
+            inplace=True
+        )
+
+
+
+# Convert object columns
+
+encoder = LabelEncoder()
+
+
+for col in df.select_dtypes(include="object").columns:
+
+    df[col] = encoder.fit_transform(
+        df[col]
+    )
+
+
+
+print(df.head())
+
+
+
+
+# ================= EDA =================
+
+print("\n===================== EDA =====================\n")
+
+
+print(df[target_column].value_counts())
+
+
+
+plt.figure(figsize=(5,4))
+
+
+df[target_column].value_counts().plot(
+    kind="bar",
+    color=["green","red"]
+)
+
+
+plt.title(
+    "Class Distribution"
+)
+
+plt.xlabel(
+    target_column
+)
+
+plt.ylabel(
+    "Count"
+)
+
+
+plt.show()
+
+
+
+
+# ================= MACHINE LEARNING =================
+
+print("\n===================== MODEL TRAINING =====================\n")
+
+
+
+# Features and target
+
+X = df.drop(
+    target_column,
+    axis=1
+)
+
+
+y = df[target_column]
+
+
+
+print("\nTarget Distribution:")
+print(y.value_counts())
+
+
+
+# Train test split
+
+X_train, X_test, y_train, y_test = train_test_split(
+
+    X,
+
+    y,
+
+    test_size=0.2,
+
+    random_state=42,
+
+    stratify=y
+
+)
+
+
+
+
+# Feature scaling
+
+scaler = StandardScaler()
+
+
+X_train = scaler.fit_transform(
+    X_train
+)
+
+
+X_test = scaler.transform(
+    X_test
+)
+
+
+
+
+# Logistic Regression
+
+model = LogisticRegression(
+
+    class_weight="balanced",
+
+    max_iter=1000
+
+)
+
+
+
+model.fit(
+
+    X_train,
+
+    y_train
+
+)
+
+
+
+
+# Prediction
+
+y_pred = model.predict(
+    X_test
+)
+
+
+
+
+# ================= RESULTS =================
